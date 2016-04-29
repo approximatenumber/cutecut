@@ -31,18 +31,18 @@ def find_images(path):
 
 def crop(path, images):
     for image in images:
-        with Image(filename=image) as orig:
+        with Image(filename=os.path.join(path, image)) as orig:
             if orig.width/orig.height < 1:
                 print('It looks like image %s needs to be rotated...' % image)
                 orig.rotate(90)
             # rotate and crop left part of image
             with orig.convert('jpeg') as img:
                 img.crop(0, 0, int(img.width/2), img.height)
-                img.save(filename=os.path.join(path, os.path.splitext(image)[0]) + '_l.jpg')
+                img.save(filename=os.path.join(path, exported, os.path.splitext(image)[0]) + '_l.jpg')
             # rotate and crop right part of image
             with orig.convert('jpeg') as img:
                 img.crop(int(img.width/2), 0, img.width, img.height)
-                img.save(filename=os.path.join(path, os.path.splitext(image)[0]) + '_r.jpg')
+                img.save(filename=os.path.join(path, exported, os.path.splitext(image)[0]) + '_r.jpg')
     return images
 
 
@@ -51,7 +51,7 @@ def convert2pdf(path, images):
     for image in images:
         img.read(filename=os.path.join(path, image))
     img.compression_quality = 75
-    img.save(filename=os.path.join(path, 'result.pdf'))
+    img.save(filename=os.path.join(path, 'exported.pdf'))
     return path
 
 
@@ -63,7 +63,7 @@ def ask(question):
 
 def main():
     if len(sys.argv) < 2 or '--help' in sys.argv[1]:
-        _exit("Usage:\ncutecut.py <path-to-directory>")
+        _exit("Usage:\n%s <path-to-directory>" % sys.argv[0])
     else:
         path = sys.argv[1]
 
@@ -76,7 +76,7 @@ def main():
     exp_path = os.path.join(path, exported)
     images = find_images(path)
     print('Founded images in %s: \n%s' % (path, '\n'.join(images)))
-    crop(exp_path, images=images)
+    crop(path, images=images)
 
     a = ask('\nConvert cropped images to PDF? y/n')
 
