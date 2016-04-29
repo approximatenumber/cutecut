@@ -2,7 +2,7 @@
 
 import os
 import sys
-import imghdr
+import _imghdr as imghdr
 from wand.image import Image
 
 supported = ['jpeg', 'png', 'tiff']
@@ -14,14 +14,14 @@ def _exit(message):
     raise SystemExit
 
 
-def get_images(path):
+def find_images(path):
     try:
         images = []
         for file in os.listdir(path):
             if (os.path.isfile(os.path.join(path, file)) and
                (imghdr.what(os.path.join(path, file)) in supported)):
                     images.append(file)
-        return images
+        return sorted(images)
     except FileNotFoundError:
         _exit('"%s" doesn`t exist!' % path)
     except PermissionError as e:
@@ -29,25 +29,36 @@ def get_images(path):
         pass
 
 
-def crop(path, image):
-    filepath = os.path.join(path, exported)
-    with Image(filename=image) as orig:
-        if orig.width/orig.height < 1:
-            print('it looks like image %s needs to be rotated...' % image)
-            orig.rotate(90)
-        # rotate and crop left part of image
-        with orig.convert('jpeg') as img:
-            img.crop(0, 0, int(img.width/2), img.height)
-            img.save(filename=os.path.join(filepath, os.path.splitext(image)[0]) + '_l.jpg')
-        # rotate and crop right part of image
-        with orig.convert('jpeg') as img:
-            img.crop(int(img.width/2), 0, img.width, img.height)
-            img.save(filename=os.path.join(filepath, os.path.splitext(image)[0]) + '_r.jpg')
-    return image
+def crop(path, images):
+    for image in images:
+        with Image(filename=image) as orig:
+            if orig.width/orig.height < 1:
+                print('It looks like image %s needs to be rotated...' % image)
+                orig.rotate(90)
+            # rotate and crop left part of image
+            with orig.convert('jpeg') as img:
+                img.crop(0, 0, int(img.width/2), img.height)
+                img.save(filename=os.path.join(path, os.path.splitext(image)[0]) + '_l.jpg')
+            # rotate and crop right part of image
+            with orig.convert('jpeg') as img:
+                img.crop(int(img.width/2), 0, img.width, img.height)
+                img.save(filename=os.path.join(path, os.path.splitext(image)[0]) + '_r.jpg')
+    return images
 
 
-def convert2pdf(images):
-    pass
+def convert2pdf(path, images):
+    img = Image()
+    for image in images:
+        img.read(filename=os.path.join(path, image))
+    img.compression_quality = 75
+    img.save(filename=os.path.join(path, 'result.pdf'))
+    return path
+
+
+def ask(question):
+    print(question)
+    answer = str(input())
+    return answer
 
 
 def main():
@@ -55,13 +66,27 @@ def main():
         _exit("Usage:\ncutecut.py <path-to-directory>")
     else:
         path = sys.argv[1]
-    if not get_images(path):
-        _exit('no images in %s' % path)
+
+    if not find_images(path):
+        _exit('No images in %s.' % path)
+
     if not os.path.exists(os.path.join(path, exported)):
         os.makedirs(os.path.join(path, exported))
-    for image in get_images(path):
-        crop(path, image)
 
+    exp_path = os.path.join(path, exported)
+    images = find_images(path)
+    print('Founded images in %s: \n%s' % (path, '\n'.join(images)))
+    crop(exp_path, images=images)
+
+    a = ask('\nConvert cropped images to PDF? y/n')
+
+    if a == 'y':
+        convert2pdf(path=exp_path, images=find_images(exp_path))
+        _exit('Done.')
+    elif a == 'n':
+        _exit('Skipped converting.')
+    else:
+        _exit('Skipped converting.')
 
 if __name__ == '__main__':
     main()
