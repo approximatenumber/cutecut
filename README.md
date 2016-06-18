@@ -8,4 +8,5 @@ Easy utility to cut and crop scanned images and converting them to PDF-book.
 
 ### Usage
 `python cutecut.py <directory-with-scanned-images>`
-Finally, ready images or ready PDF-file will be located in `<directory-with-scanned-images>/exported`.
+
+As a result, ready images or ready PDF-file will be located in `<directory-with-scanned-images>/exported`.
