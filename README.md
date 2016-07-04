@@ -2,9 +2,8 @@
 Easy utility to cut and crop scanned images and converting them to PDF-book.
 
 ### Dependencies
-* `python3`
 * `imghdr.py` (included, because my `pip` can`t find it)
-* `wand.py`
+* `wand`
 
 ### Usage
 `python cutecut.py <directory-with-scanned-images>`
